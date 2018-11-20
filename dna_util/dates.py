@@ -140,3 +140,30 @@ def get_daterange(date_window: Optional[Window] = None,
         import pandas as pd
         for date in pd.date_range(start_date, end_date, freq=freq):
             yield validate_date(date)
+
+
+def get_first_day_of_month(date: Union[str, datetime, timedelta, None] = None) -> str:
+    """ Generate a string for the first day of the month given any type
+        accepted by validate_date
+    Parameters
+    -----------
+    date : Union[str, datetime, timedelta, None
+        Date in "YYYY-MM-DD", datetime, timedelta, or None.
+        If str, ValueError will be raised if not in proper format
+        If datetime, input will be converted to "YYYY-MM-DD" format.
+        If timedelta, input will be **added** to the current date (e.g.
+        timedelta(days=-1) for yesterday's date)
+        If None, date will default to today's date.
+    Returns
+    --------
+    str : date in "YYYY-MM-01" format
+    Example
+    --------
+    >>> get_first_day_of_month("2018-10-16")
+    > "2018-10-01"
+    """
+    if date is None:
+        date = datetime.today()
+    date = str_to_datetime(validate_date(date))
+    new_date = datetime(date.year, date.month, 1)
+    return validate_date(new_date)

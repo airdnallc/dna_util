@@ -3,6 +3,9 @@ import sys
 import logging
 import binascii
 from typing import List, Dict, Any, Optional
+import argparse
+
+from dna_util.io import already_exists
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +65,22 @@ def parse_args(obj: object, obj_funs: Optional[List[str]] = None,
     args = {key: value for key, value in kwargs.items() if key in obj.__code__.co_varnames}
 
     return args
+
+
+def argparse_path_exists(path: str):
+    """ Validates a file path exists when parsing input using ArgParse
+
+    Parameters
+    -----------
+    path : str
+        The file path to validate
+
+    Returns
+    --------
+    path if path exists, raises argparse.ArgumentTypeError otherwise
+    """
+    path = str(path)
+    if not already_exists(path):
+        msg = f"{path!r} does not exist"
+        raise argparse.ArgumentTypeError(msg)
+    return path

@@ -114,3 +114,6 @@ atlassian-ide-plugin.xml
 
 # VS Code
 .vscode/
+
+# mypy
+.mypy_cache

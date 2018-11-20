@@ -122,11 +122,6 @@ def load_parquet(path: str, **kwargs) -> pd.DataFrame:
         Passed to pyarrow.parquet.ParquetDataset().read()
         Names of columns to read from the dataset
 
-    nthreads : int
-        Passed to pyarrow.parquet.ParquetDataset().read()
-        Number of columns to read in parallel. Requires that the underlying
-        file source is threadsafe
-
     Any additional kwargs are passed to pyarrow.Table.to_pandas().
     See [documentation](https://arrow.apache.org/docs/python/generated/pyarrow.Table.html?highlight=table#pyarrow.Table.to_pandas) for more information
 
@@ -140,7 +135,6 @@ def load_parquet(path: str, **kwargs) -> pd.DataFrame:
     split_row_groups = kwargs.pop("split_row_groups", False)
     filters = kwargs.pop("filters", None)
     columns = kwargs.pop("columns", None)
-    nthreads = kwargs.pop("nthreads", 1)
 
     if not s3.is_s3path(path):
         fs = None
@@ -154,7 +148,7 @@ def load_parquet(path: str, **kwargs) -> pd.DataFrame:
         filters=filters
     )
 
-    table = dataset.read(columns=columns, nthreads=nthreads)
+    table = dataset.read(columns=columns)
 
     logger.info(f"Converting PyArrow Table to Pandas DataFrame. kwargs passed {kwargs!r}")
 

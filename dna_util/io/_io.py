@@ -1,8 +1,10 @@
 import os
 import logging
 import json
-from typing import List, Any
+from typing import List, Any, Optional
 import pickle
+
+import pandas as pd
 
 from dna_util.io import _s3 as s3
 from dna_util.io import _local as local
@@ -141,13 +143,14 @@ def get_size(path: str, **kwargs) -> int:
         return local.get_size(path)
 
 
-def load_object(path: str, file_type: str = "pickle", **kwargs) -> Any:
+def load_object(path: str, file_type: Optional[str] = None, **kwargs) -> Any:
     """ Load a file into memory
 
     Parameters
     -----------
     path : str
-        Path to the file
+        Path to the file. If file_type is not specified, an attempt will be
+        made to infer the file_type based on the extension.
 
     file_type : str
         Type of file to load.  Supported options are currently:
@@ -175,6 +178,9 @@ def load_object(path: str, file_type: str = "pickle", **kwargs) -> Any:
     """
     # Pop fs from kwargs
     fs = kwargs.pop("fs", None)
+
+    if file_type is None:
+        file_type = _file_type_helper(path)
 
     if file_type == "parquet":
         from ._parquet import load_parquet
@@ -215,7 +221,7 @@ def load_object(path: str, file_type: str = "pickle", **kwargs) -> Any:
     return obj
 
 
-def save_object(obj: object, path: str, file_type: str = "pickle",
+def save_object(obj: object, path: str, file_type: Optional[str] = None,
                 overwrite: bool = True, protocol: int = pickle.HIGHEST_PROTOCOL,
                 **kwargs) -> None:
     """ Save an object in memory to a file
@@ -226,7 +232,8 @@ def save_object(obj: object, path: str, file_type: str = "pickle",
         Python object in memory
 
     path : str
-        Local or S3 path to save file
+        Local or S3 path to save file. If file_type is not specified, an
+        attempt will be made to infer the file_type based on the extension.
 
     file_type : str
         Type of file to save.
@@ -272,6 +279,9 @@ def save_object(obj: object, path: str, file_type: str = "pickle",
     if not overwrite and already_exists(path, fs=fs):
         raise ValueError(f"overwrite set to False and {path!r} already exists")
 
+    if file_type is None:
+        file_type = _file_type_helper(path)
+
     if file_type == "pickle":
         logger.info(f"Saving obj as a pickle file. kwargs passed {kwargs!r}")
         obj = pickle.dumps(obj, protocol=protocol, **kwargs)
@@ -280,7 +290,6 @@ def save_object(obj: object, path: str, file_type: str = "pickle",
         pass
     elif file_type == "csv":
         logger.info(f"Saving obj as a CSV file. kwargs passed {kwargs!r}")
-        import pandas as pd
         if not isinstance(obj, pd.DataFrame):
             raise TypeError(f"obj must be a pandas DataFrame when file_type='csv'. {type(obj)!r} passed")
         obj = obj.to_csv(path_or_buf=None, **kwargs)
@@ -301,6 +310,7 @@ def save_object(obj: object, path: str, file_type: str = "pickle",
         s3.save_object(obj, path, overwrite, fs, acl)
     else:
         logger.info("Saving object to local")
+        path = local._norm_path(path)
         if isinstance(obj, (bytes, bytearray)):
             mode = "wb"
         else:
@@ -308,3 +318,32 @@ def save_object(obj: object, path: str, file_type: str = "pickle",
 
         with open(path, mode) as f:
             f.write(obj)
+
+
+def _file_type_helper(path):
+    """ The purpose of this helper is to try an infer the file type based on
+        the extension of the input path. This removes the need to specify the
+        file type if the property extension is provided.
+
+    A ValueError is raised if the type cannot be inferred
+
+    """
+    type_dict = dict(
+        pkl="pickle",
+        csv="csv",
+        json="json",
+        parquet="parquet",
+        txt="raw"
+    )
+
+    extension = path.split(".")[-1]
+
+    if extension not in type_dict:
+        raise ValueError(
+            f"The file type could not be inferred. Either the specified path "
+            f"did not include a file extension or the specified extension is "
+            f"not supported. Include a supported extension or specify the file "
+            f"type explicitly with the file_type argument. {path!r} passed."
+        )
+
+    return type_dict[extension]

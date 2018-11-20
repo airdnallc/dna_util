@@ -21,6 +21,7 @@ setuptools.setup(
     install_requires=[
         "pyaml",
         "pandas",
-        "s3fs"
+        "s3fs",
+        "pyarrow"
     ]
 )
