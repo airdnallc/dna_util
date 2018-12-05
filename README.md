@@ -15,10 +15,17 @@ Notable functions include:
 * `ls` - List files located in a directory either local/S3
 * `rm` - Remove file/directory from local/S3
 * `already_exists` - Test whether a file/directory already exists locally or on S3
-* `load_object` - Load a file into memory from local/S3 storage. A variety of file types are supported including "pickle", "raw", "csv", and "json"
-* `save_object` - Save and object from memory to a local/S3 file. All file types that load_objects supports are  supported.
+* `load_object` - Load a file into memory from local/S3 storage. A variety of file types are supported including "pickle", "raw", "csv", "json", and "parquet"
+* `save_object` - Save an object from memory to a local/S3 file. All file types that load_objects supports are supported.
 * `is_s3path` - Determine if a path refers to an S3 path or not
 * `get_size` - Return the size of the file/directory in bytes
+
+The `io` module also includes a `mlflow` submodule for easily saving and loading artifacts to a dynamic location given the currently active mlflow run.
+
+* `mlflow.load_artifact` - Load a file into memory from local/S3 storage based on the specified run_uuid and subpath. If you are not working with a local `mlruns` directory, a tracking uri must be supplied. Any additional arguments are passed to `load_object`
+* `mlflow.save_artifact` - Save an object from memory to local/S3 storage based on the mlflow run's specified artifact store combined with the specified subpath. Any additional argument are passed to `save_object`
+
+NOTE: `mlflow` is not a requirement for this package. If you do not have `mlflow` installed, the submodule will not appear.
 
 ## config
 
