@@ -103,7 +103,7 @@ def is_dir(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> bool:
 
 
 def cp(from_path: str, to_path: str, overwrite: bool = True,
-       include_folder_name: bool = True, 
+       include_folder_name: bool = True,
        fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> None:
     """ Copy a file/directory to/from s3 and your local machine
 
@@ -126,7 +126,7 @@ def cp(from_path: str, to_path: str, overwrite: bool = True,
 
     fs : s3fs.S3FileSystem
         If None, an instance of S3FileSystem will be created
-    
+
     **kwargs
         "acl" to specify how file permission are set
         "num_threads" to specify number of threads when copying (default 100)
@@ -138,7 +138,7 @@ def cp(from_path: str, to_path: str, overwrite: bool = True,
     None
     """
     s3FileArgs = {
-        "acl": kwargs.pop("acl", "bucket-owner-full-control"), 
+        "acl": kwargs.pop("acl", "bucket-owner-full-control"),
         "num_threads": kwargs.pop("num_threads", 100)
     }
 
@@ -146,30 +146,35 @@ def cp(from_path: str, to_path: str, overwrite: bool = True,
         fs = s3fs.S3FileSystem(**kwargs)
 
     if is_s3path(from_path):
-        #### Copy s3 file(s) to local or s3 ####
-
+        ##################################
+        # Copy s3 file(s) to local or s3 #
+        ##################################
         if not already_exists(from_path, fs):
             raise ValueError(f"from_path: {from_path!r} does not exist")
-        
+
         # Use existing file/directory name if one was not specified
         if include_folder_name and is_dir(from_path, fs):
             folder_name = os.path.basename(os.path.normpath(from_path))
             to_path = os.path.join(to_path, folder_name)
             logger.debug(f"to_path after adding folder name: {to_path!r}")
 
-
         if is_s3path(to_path):
-            ### s3 -> s3 copy ###
+            #################
+            # s3 -> s3 copy #
+            #################
             logger.debug(f"Copying s3 files: {from_path!r} to s3 location: {to_path!r}")
             _s3_to_s3_cp(from_path, to_path, overwrite, fs, **s3FileArgs)
         else:
-            ### s3 --> local copy ###
+            #####################
+            # s3 --> local copy #
+            #####################
             logger.debug(f"Copying s3 files: {from_path!r} to local location: {to_path!r}")
             _s3_to_local_cp(from_path, to_path, overwrite, fs, **s3FileArgs)
 
     else:
-        #### Copy local file(s) to s3 ####
-        
+        ############################
+        # Copy local file(s) to s3 #
+        ############################
         if not local.already_exists(from_path):
             raise ValueError(f"{from_path!r} does not exist")
 
@@ -182,8 +187,7 @@ def cp(from_path: str, to_path: str, overwrite: bool = True,
         _local_to_s3_cp(from_path, to_path, overwrite, fs, **s3FileArgs)
 
 
-
-def ls(path: str, full_path: bool = False, recursive: bool = False, 
+def ls(path: str, full_path: bool = False, recursive: bool = False,
        fs: Optional[s3fs.S3FileSystem] = None) -> List[str]:
     """ List the contents under an s3 key/"directory"
 
@@ -207,13 +211,11 @@ def ls(path: str, full_path: bool = False, recursive: bool = False,
     --------
     List[str]
     """
-    if not is_s3path(path):
-        raise ValueError(f"{path!r} is not a valid s3 path")
-    elif not already_exists(path):
-        raise ValueError(f"{path!r} does not exist")
-
     if fs is None:
         fs = s3fs.S3FileSystem()
+
+    if not is_s3path(path):
+        raise ValueError(f"{path!r} is not a valid s3 path")
 
     if is_dir(path, fs):
         if recursive:
@@ -230,11 +232,11 @@ def ls(path: str, full_path: bool = False, recursive: bool = False,
     else:
         strip_path = _norm_s3_path(path) + "/"
         files = [f.replace(strip_path, "") for f in files]
-    
+
     return sorted(files)
 
 
-def rm(path: str, dry_run: bool = False, 
+def rm(path: str, dry_run: bool = False,
        fs: Optional[s3fs.S3FileSystem] = None) -> None:
     """ Delete a file/directory
 
@@ -244,8 +246,8 @@ def rm(path: str, dry_run: bool = False,
         File path to delete
 
     dry_run : bool (default False)
-        Print out number of files to be deleted and exit.  If False, number of 
-        files to be deleted will be logged and files will be removed 
+        Print out number of files to be deleted and exit.  If False, number of
+        files to be deleted will be logged and files will be removed
 
     Returns
     --------
@@ -256,7 +258,7 @@ def rm(path: str, dry_run: bool = False,
 
     if fs is None:
         fs = s3fs.S3FileSystem()
-    
+
     num_files = len(ls(path, recursive=True, fs=fs))
 
     if dry_run:
@@ -271,7 +273,7 @@ def rm(path: str, dry_run: bool = False,
         fs.rm(path)
 
 
-def save_object(obj: object, path: str, overwrite: bool = True, 
+def save_object(obj: object, path: str, overwrite: bool = True,
                 fs: Optional[s3fs.S3FileSystem] = None,
                 acl: str = "bucket-owner-full-control", **kwargs) -> None:
     """ Save an object from memory to s3
@@ -363,15 +365,16 @@ def get_size(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> int:
         return fs.info(path)["Size"]
 
 
-
-def _s3_to_s3_cp(from_path: str, to_path: str, overwrite: bool, 
+def _s3_to_s3_cp(from_path: str, to_path: str, overwrite: bool,
                  fs: s3fs.S3FileSystem, **kwargs) -> None:
     from_path = _norm_s3_path(from_path)
     to_path = _norm_s3_path(to_path)
     files = fs.walk(from_path)
 
     if files:
-        ### Copying a directory of files ###
+        ################################
+        # Copying a directory of files #
+        ################################
         to_files = [os.path.join(to_path, f.replace(from_path+"/", "")) for f in files]
 
         # Ensure we aren't overwriting any files
@@ -385,7 +388,9 @@ def _s3_to_s3_cp(from_path: str, to_path: str, overwrite: bool,
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.copy, from_file, to_file, **kwargs)
     else:
-        ### Copying a single file ###
+        #########################
+        # Copying a single file #
+        #########################
 
         # Ensure we aren't overwriting the file
         if not overwrite and already_exists(to_path, fs):
@@ -401,7 +406,9 @@ def _s3_to_local_cp(from_path: str, to_path: str, overwrite: bool,
     files = fs.walk(from_path)
 
     if files:
-        ### Copying a directory of files ###
+        ################################
+        # Copying a directory of files #
+        ################################
 
         # Check to see if to_path already exists
         if not overwrite and local.already_exists(to_path):
@@ -423,23 +430,27 @@ def _s3_to_local_cp(from_path: str, to_path: str, overwrite: bool,
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.get, from_file, to_file, **kwargs)
     else:
-        ### Copy a single file ###
+        ######################
+        # Copy a single file #
+        ######################
         if not overwrite and local.already_exists(to_path, fs):
             raise ValueError(f"Overwrite set to False and {to_path!r} already "
                              f"exists")
-        
+
         fs.get(from_path, to_path, **kwargs)
 
 
 def _local_to_s3_cp(from_path, to_path, overwrite, fs, **kwargs):
     from_path = local._norm_path(from_path)
-    
+
     if not overwrite and already_exists(to_path, fs):
         raise ValueError(f"Overwrite set to False and {to_path!r} "
                          f"already exists")
 
     if os.path.isdir(from_path):
-        ### Copy directory of files ###
+        ###########################
+        # Copy directory of files #
+        ###########################
         files = local.ls(from_path, full_path=True, recursive=True)
         to_files = [os.path.join(to_path, f) for f in local.ls(from_path, recursive=True)]
 
@@ -448,12 +459,13 @@ def _local_to_s3_cp(from_path, to_path, overwrite, fs, **kwargs):
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.put, from_file, to_file, **kwargs)
     else:
-        ### Copy a single file ###
+        ######################
+        # Copy a single file #
+        ######################
         fs.put(from_path, to_path, **kwargs)
 
 
-
-def _local_create_subfolders(from_path: str, to_path: str, 
+def _local_create_subfolders(from_path: str, to_path: str,
                              fs: s3fs.S3FileSystem) -> None:
     """ Helper for creating subdirectories when calling _s3_to_local_cp
     """
@@ -464,12 +476,8 @@ def _local_create_subfolders(from_path: str, to_path: str,
     for sub in subfolders:
         from_path = os.path.join(from_path, sub)
         to_path = os.path.join(to_path, sub)
-    
+
         logger.debug(f"Creating local subfolder {to_path!r}")
 
         os.makedirs(to_path)
         _local_create_subfolders(from_path, to_path, fs)
-
-
-
-    
