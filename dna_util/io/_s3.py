@@ -16,7 +16,7 @@ def _norm_s3_path(path: str) -> str:
     return new_path
 
 
-def already_exists(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> bool:
+def already_exists(path: str, fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> bool:
     """ Test to see if a file/directory already exists
 
     Parameters
@@ -27,12 +27,17 @@ def already_exists(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> bool:
     fs : s3fs.S3FileSystem
         If None, an instance of S3FileSystem will be created
 
+    **kwargs
+        Extra args to be passed to S3FileSystem if one wasn't provided.  e.g.
+        passing profile_name="..." will use that profile defined in your
+        ~/.aws/credentials file
+
     Returns
     --------
     bool
     """
     if fs is None:
-        fs = s3fs.S3FileSystem()
+        fs = s3fs.S3FileSystem(**kwargs)
     return fs.exists(path)
 
 
@@ -72,7 +77,7 @@ def split_s3path(path: str) -> Tuple[str, str]:
     return bucket, key
 
 
-def is_dir(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> bool:
+def is_dir(path: str, fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> bool:
     """ Test if a given s3 path is a directory or not
 
     Parameters
@@ -83,6 +88,11 @@ def is_dir(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> bool:
     fs : s3fs.S3FileSystem
         If None, an instance of S3FileSystem will be created
 
+    **kwargs
+        Extra args to be passed to S3FileSystem if one wasn't provided.  e.g.
+        passing profile_name="..." will use that profile defined in your
+        ~/.aws/credentials file
+
     Returns
     --------
     bool
@@ -91,7 +101,7 @@ def is_dir(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> bool:
         raise ValueError(f"{path!r} is not a valid s3path.")
 
     if fs is None:
-        fs = s3fs.S3FileSystem()
+        fs = s3fs.S3FileSystem(**kwargs)
 
     path = _norm_s3_path(path)
     lst = fs.ls(path)
@@ -188,7 +198,7 @@ def cp(from_path: str, to_path: str, overwrite: bool = True,
 
 
 def ls(path: str, full_path: bool = False, recursive: bool = False,
-       fs: Optional[s3fs.S3FileSystem] = None) -> List[str]:
+       fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> List[str]:
     """ List the contents under an s3 key/"directory"
 
     Will throw a ValueError if the given path doesn't exist
@@ -207,12 +217,17 @@ def ls(path: str, full_path: bool = False, recursive: bool = False,
     fs : s3fs.S3FileSystem
         If None, an instance of S3FileSystem will be created
 
+    **kwargs
+        Extra args to be passed to S3FileSystem if one wasn't provided.  e.g.
+        passing profile_name="..." will use that profile defined in your
+        ~/.aws/credentials file
+
     Returns
     --------
     List[str]
     """
     if fs is None:
-        fs = s3fs.S3FileSystem()
+        fs = s3fs.S3FileSystem(**kwargs)
 
     if not is_s3path(path):
         raise ValueError(f"{path!r} is not a valid s3 path")
@@ -237,7 +252,7 @@ def ls(path: str, full_path: bool = False, recursive: bool = False,
 
 
 def rm(path: str, dry_run: bool = False,
-       fs: Optional[s3fs.S3FileSystem] = None) -> None:
+       fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> None:
     """ Delete a file/directory
 
     Parameters
@@ -249,6 +264,14 @@ def rm(path: str, dry_run: bool = False,
         Print out number of files to be deleted and exit.  If False, number of
         files to be deleted will be logged and files will be removed
 
+    fs : s3fs.S3FileSystem
+        If None, an instance of S3FileSystem will be created
+
+    **kwargs
+        Extra args to be passed to S3FileSystem if one wasn't provided.  e.g.
+        passing profile_name="..." will use that profile defined in your
+        ~/.aws/credentials file
+
     Returns
     --------
     None
@@ -257,7 +280,7 @@ def rm(path: str, dry_run: bool = False,
         raise ValueError(f"{path!r} is not a valid s3 path.")
 
     if fs is None:
-        fs = s3fs.S3FileSystem()
+        fs = s3fs.S3FileSystem(**kwargs)
 
     num_files = len(ls(path, recursive=True, fs=fs))
 
@@ -341,7 +364,7 @@ def load_object(path: str, fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> 
     return fs.open(path)
 
 
-def get_size(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> int:
+def get_size(path: str, fs: Optional[s3fs.S3FileSystem] = None, **kwargs) -> int:
     """ Return size of file/directory in bytes
 
     Parameters
@@ -352,12 +375,17 @@ def get_size(path: str, fs: Optional[s3fs.S3FileSystem] = None) -> int:
     fs : s3fs.S3FileSystem
         If None, an instance of S3FileSystem will be created
 
+    **kwargs
+        Extra args to be passed to S3FileSystem if one wasn't provided.  e.g.
+        passing profile_name="..." will use that profile defined in your
+        ~/.aws/credentials file
+
     Returns
     --------
     int
     """
     if not fs:
-        fs = s3fs.S3FileSystem()
+        fs = s3fs.S3FileSystem(**kwargs)
 
     if is_dir(path, fs):
         return sum(map(lambda fpath: get_size(fpath, fs), ls(path, full_path=True, recursive=True, fs=fs)))
