@@ -6,25 +6,25 @@ from typing import Union, Iterator, Optional
 Window = namedtuple("Window", ["start", "end"])
 
 
-def validate_date(date: Union[str, datetime, timedelta, None]) -> str:
+def validate_date(date: Union[str, datetime, timedelta, None] = None) -> str:
     """ Helper function that validates and normalizes date input
 
     Parameters
     -----------
-    date : Union[str, datetime, timedelta, None
+    date : Union[str, datetime, timedelta, None] (default None)
         Date in "YYYY-MM-DD", datetime, timedelta, or None.
         If str, ValueError will be raised if not in proper format
         If datetime, input will be converted to "YYYY-MM-DD" format.
         If timedelta, input will be **added** to the current date (e.g.
         timedelta(days=-1) for yesterday's date)
-        If None, date will default to yesterday's date.
+        If None, date will default to todays's date.
 
     Returns
     --------
     str : date in "YYYY-MM-DD" format
     """
     if date is None:
-        date = datetime.now() + timedelta(days=-1)
+        date = datetime.now()
     elif isinstance(date, str):
         try:
             date = datetime.strptime(date, '%Y-%m-%d')
