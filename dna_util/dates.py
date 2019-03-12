@@ -1,17 +1,18 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import Union, Iterator, Optional
+from dateutil.relativedelta import relativedelta
 
 # Defines begin and end dates
 Window = namedtuple("Window", ["start", "end"])
 
 
-def validate_date(date: Union[str, datetime, timedelta, None] = None) -> str:
+def validate_date(date: Union[str, datetime, timedelta, relativedelta, None] = None) -> str:
     """ Helper function that validates and normalizes date input
 
     Parameters
     -----------
-    date : Union[str, datetime, timedelta, None] (default None)
+    date : Union[str, datetime, timedelta, relativedelta, None] (default None)
         Date in "YYYY-MM-DD", datetime, timedelta, or None.
         If str, ValueError will be raised if not in proper format
         If datetime, input will be converted to "YYYY-MM-DD" format.
@@ -31,11 +32,12 @@ def validate_date(date: Union[str, datetime, timedelta, None] = None) -> str:
         except ValueError:
             raise ValueError(f"Invalid date string: {date!r}. "
                              "Must be in YYYY-MM-DD format.")
-    elif isinstance(date, timedelta):
+    elif isinstance(date, (timedelta, relativedelta)):
         date = datetime.now() + date
     elif not hasattr(date, 'strftime'):
         raise ValueError(f"Invalid input type {type(date)!r}. Input must be "
-                         f"of type str, datetime, timedelta, or None")
+                         f"of type str, datetime, timedelta, relativedelta "
+                         f"or None")
     return date.strftime("%Y-%m-%d")
 
 
@@ -142,7 +144,7 @@ def get_daterange(date_window: Optional[Window] = None,
             yield validate_date(date)
 
 
-def get_first_day_of_month(date: Union[str, datetime, timedelta, None] = None) -> str:
+def get_first_day_of_month(date: Union[str, datetime, timedelta, relativedelta, None] = None) -> str:
     """ Generate a string for the first day of the month given any type
         accepted by validate_date
     Parameters
@@ -151,8 +153,8 @@ def get_first_day_of_month(date: Union[str, datetime, timedelta, None] = None) -
         Date in "YYYY-MM-DD", datetime, timedelta, or None.
         If str, ValueError will be raised if not in proper format
         If datetime, input will be converted to "YYYY-MM-DD" format.
-        If timedelta, input will be **added** to the current date (e.g.
-        timedelta(days=-1) for yesterday's date)
+        If timedelta or relativedelta, input will be **added** to the current
+        date (e.g. timedelta(days=-1) for yesterday's date)
         If None, date will default to today's date.
     Returns
     --------
