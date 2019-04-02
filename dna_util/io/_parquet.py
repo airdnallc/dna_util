@@ -78,9 +78,9 @@ def load_parquet(path: str, engine: str = "auto",
             raise ImportError("Neither fastparquet nor pyarrow are installed")
 
     if engine == "fastparquet":
-        load_parquet_fp(path, **kwargs)
+        return load_parquet_fp(path, **kwargs)
     else:
-        load_parquet_pa(path, **kwargs)
+        return load_parquet_pa(path, **kwargs)
 
 
 def save_parquet_pa(df: pd.DataFrame, path: str, **kwargs) -> None:
