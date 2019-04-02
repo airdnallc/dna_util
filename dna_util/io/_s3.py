@@ -502,10 +502,10 @@ def _local_create_subfolders(from_path: str, to_path: str,
     subfolders = [f["Key"].replace(from_path+"/", "") for f in files if f["StorageClass"] == "DIRECTORY"]
 
     for sub in subfolders:
-        from_path = os.path.join(from_path, sub)
-        to_path = os.path.join(to_path, sub)
+        from_sub_path = os.path.join(from_path, sub)
+        path_to_create = os.path.join(to_path, sub)
 
         logger.debug(f"Creating local subfolder {to_path!r}")
 
-        os.makedirs(to_path)
-        _local_create_subfolders(from_path, to_path, fs)
+        os.makedirs(path_to_create)
+        _local_create_subfolders(from_sub_path, path_to_create, fs)
