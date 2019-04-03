@@ -332,6 +332,7 @@ def _file_type_helper(path):
         csv="csv",
         json="json",
         parquet="parquet",
+        parq="parquet",
         txt="raw"
     )
 
