@@ -1,2 +1,2 @@
 name = "dna_util"
-__version__ = "0.0.9a5"
+__version__ = "0.0.9a6"
