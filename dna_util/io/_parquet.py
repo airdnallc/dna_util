@@ -7,6 +7,7 @@ import pandas as pd
 import s3fs
 
 from dna_util.io import _s3 as s3
+from dna_util.util import parse_args
 
 logger = logging.getLogger(__name__)
 
@@ -321,6 +322,11 @@ def load_parquet_fp(path: str, **kwargs) -> pd.DataFrame:
 
     fs = kwargs.pop("fs", None)
 
+    # Pull out arguments that should be directed to to_pandas
+    to_pandas_args = parse_args(fp, ["ParquetFile", "to_pandas"], **kwargs)
+    # Remove these args from kwargs
+    kwargs = {k: v for k, v in kwargs.items() if k in set(kwargs) - set(to_pandas_args)}
+
     if s3.is_s3path(path):
         fs = fs or s3fs.S3FileSystem()
         myopen = fs.open
@@ -333,5 +339,5 @@ def load_parquet_fp(path: str, **kwargs) -> pd.DataFrame:
         **kwargs
     )
 
-    df = pf.to_pandas(**kwargs)
+    df = pf.to_pandas(**to_pandas_args)
     return df
