@@ -412,6 +412,8 @@ def _s3_to_s3_cp(from_path: str, to_path: str, overwrite: bool,
                     raise ValueError(f"Overwrite set to False and {to_file!r} exists")
 
         num_threads = kwargs.pop("num_threads", 100)
+        # Turn off connectionpool warnings
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
         with ThreadPoolExecutor(num_threads) as executor:
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.copy, from_file, to_file, **kwargs)
@@ -454,6 +456,8 @@ def _s3_to_local_cp(from_path: str, to_path: str, overwrite: bool,
         to_files = [os.path.join(to_path, f.replace(from_path+"/", "")) for f in files]
 
         num_threads = kwargs.pop("num_threads", 100)
+        # Turn off connectionpool warnings
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
         with ThreadPoolExecutor(num_threads) as executor:
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.get, from_file, to_file, **kwargs)
@@ -483,6 +487,8 @@ def _local_to_s3_cp(from_path, to_path, overwrite, fs, **kwargs):
         to_files = [os.path.join(to_path, f) for f in local.ls(from_path, recursive=True)]
 
         num_threads = kwargs.pop("num_threads", 100)
+        # Turn off connectionpool warnings
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
         with ThreadPoolExecutor(num_threads) as executor:
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.put, from_file, to_file, **kwargs)
