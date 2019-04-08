@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import binascii
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Iterable, Iterator
 import argparse
 
 from dna_util.io import already_exists
@@ -84,3 +84,29 @@ def argparse_path_exists(path: str):
         msg = f"{path!r} does not exist"
         raise argparse.ArgumentTypeError(msg)
     return path
+
+
+def chunks(lst: List[Any], num: int) -> Iterator[Any]:
+    """ Split list into chunks of size num
+
+    Will generate an iterator that will return each chunk of size num.  If you
+    need an array of a given number of elements, consider using
+    numpy.array_split.
+
+    Parameters
+    -----------
+    lst : List[Any]
+        List of objects to split into num sized chunks.  Supports any object
+        that supports subscripting (e.g. List, Tuple, Array)
+
+    num : int
+        The number of objects that should be contained in each chunk
+
+    Returns
+    --------
+    Iterator[Any]
+        An Iterator that will return lists of the contained objects of size num
+        (the last yielded object may be some length less than num)
+    """
+    for i in range(0, len(lst), num):
+        yield lst[i: i + num]

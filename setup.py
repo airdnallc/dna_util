@@ -22,6 +22,6 @@ setuptools.setup(
         "pyaml",
         "pandas",
         "s3fs",
-        "pyarrow"
+        "fastparquet"
     ]
 )

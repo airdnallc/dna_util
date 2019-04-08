@@ -412,7 +412,9 @@ def _s3_to_s3_cp(from_path: str, to_path: str, overwrite: bool,
                     raise ValueError(f"Overwrite set to False and {to_file!r} exists")
 
         num_threads = kwargs.pop("num_threads", 100)
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        # Turn off connectionpool warnings
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
+        with ThreadPoolExecutor(num_threads) as executor:
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.copy, from_file, to_file, **kwargs)
     else:
@@ -454,7 +456,9 @@ def _s3_to_local_cp(from_path: str, to_path: str, overwrite: bool,
         to_files = [os.path.join(to_path, f.replace(from_path+"/", "")) for f in files]
 
         num_threads = kwargs.pop("num_threads", 100)
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        # Turn off connectionpool warnings
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
+        with ThreadPoolExecutor(num_threads) as executor:
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.get, from_file, to_file, **kwargs)
     else:
@@ -483,7 +487,9 @@ def _local_to_s3_cp(from_path, to_path, overwrite, fs, **kwargs):
         to_files = [os.path.join(to_path, f) for f in local.ls(from_path, recursive=True)]
 
         num_threads = kwargs.pop("num_threads", 100)
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        # Turn off connectionpool warnings
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
+        with ThreadPoolExecutor(num_threads) as executor:
             for from_file, to_file in zip(files, to_files):
                 executor.submit(fs.put, from_file, to_file, **kwargs)
     else:
@@ -502,10 +508,10 @@ def _local_create_subfolders(from_path: str, to_path: str,
     subfolders = [f["Key"].replace(from_path+"/", "") for f in files if f["StorageClass"] == "DIRECTORY"]
 
     for sub in subfolders:
-        from_path = os.path.join(from_path, sub)
-        to_path = os.path.join(to_path, sub)
+        from_sub_path = os.path.join(from_path, sub)
+        path_to_create = os.path.join(to_path, sub)
 
         logger.debug(f"Creating local subfolder {to_path!r}")
 
-        os.makedirs(to_path)
-        _local_create_subfolders(from_path, to_path, fs)
+        os.makedirs(path_to_create)
+        _local_create_subfolders(from_sub_path, path_to_create, fs)
