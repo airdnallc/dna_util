@@ -291,7 +291,7 @@ def save_object(obj: object, path: str, file_type: Optional[str] = None,
         logger.info(f"Saving obj as a CSV file. kwargs passed {kwargs!r}")
         if not isinstance(obj, pd.DataFrame):
             raise TypeError(f"obj must be a pandas DataFrame when file_type='csv'. {type(obj)!r} passed")
-        obj = obj.to_csv(path_or_buf=None, **kwargs)
+        obj = obj.to_csv(path_or_buf=None, **kwargs).encode()
     elif file_type == "json":
         logger.info(f"Saving obj as a json file. kwargs passed {kwargs!r}")
         obj = json.dumps(obj, **kwargs)
