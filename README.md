@@ -59,3 +59,7 @@ $ python -m pytest
 ```
 
 If you add functionality, write some tests for it!
+
+## Installing
+
+pip install git+https://github.com/airdnallc/dna_util.git@v0.0.9#egg=dna_util
